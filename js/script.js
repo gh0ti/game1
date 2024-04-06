@@ -61,8 +61,8 @@ window.addEventListener('load', function () {
             this.speedY = 0;
             this.maxSpeed = 2;
             this.projectiles = [];
-            this.ammo = 20;
             this.maxAmmo = 20;
+            this.ammo = this.maxAmmo;
             this.ammoTimer = 0;
             this.ammoInterval = 500;
         }
@@ -105,6 +105,9 @@ window.addEventListener('load', function () {
         }
 
         shootTop() {
+            if (this.ammo <= 0) {
+                return;
+            }
             this.projectiles.push(new Projectile(this.game, this.x + 70, this.y + 30));
             this.ammo--;
             console.log(this.projectiles);
@@ -124,7 +127,20 @@ window.addEventListener('load', function () {
     }
 
     class UI {
+        constructor(game) {
+            this.game = game;
+            this.fontSize = 25;
+            this.fontFamily = 'Helvetica';
+            this.color = 'yellow';
+        }
 
+        draw(context) {
+            context.fillStyle = this.color;
+            console.log(this.game.player.ammo);
+            for (let i = 0; i < this.game.player.ammo; i++) {
+                context.fillRect(20 + 5 * i, 20, 3, 20);
+            }
+        }
     }
 
     class Game {
@@ -133,6 +149,7 @@ window.addEventListener('load', function () {
             this.height = height;
             this.player = new Player(this);
             this.input = new InputHandler(this);
+            this.ui = new UI(this);
             this.keys = [];
         }
 
@@ -142,6 +159,7 @@ window.addEventListener('load', function () {
 
         draw(context) {
             this.player.draw(context);
+            this.ui.draw(context);
         }
     }
 
