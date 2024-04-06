@@ -61,9 +61,14 @@ window.addEventListener('load', function () {
             this.speedY = 0;
             this.maxSpeed = 2;
             this.projectiles = [];
+            this.ammo = 20;
+            this.maxAmmo = 20;
+            this.ammoTimer = 0;
+            this.ammoInterval = 500;
         }
 
-        update() {
+        update(deltaTime) {
+            // handle movement
             if (this.game.keys.includes('ArrowUp')) {
                 this.speedY = -this.maxSpeed;
             } else if (this.game.keys.includes('ArrowDown')) {
@@ -72,11 +77,24 @@ window.addEventListener('load', function () {
                 this.speedY = 0;
             }
             this.y += this.speedY;
+
             // handle projectiles
             this.projectiles.forEach(projectile => {
                 projectile.update();
             });
             this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion);
+
+            // handle ammo
+            if (this.ammoTimer > this.ammoInterval) {
+                console.log('process ammo update');
+                if (this.ammo < this.maxAmmo) {
+                    console.log('ammo update');
+                    this.ammo++;
+                }
+                this.ammoTimer = 0;
+            } else {
+                this.ammoTimer += deltaTime;
+            }
         }
 
         draw(context) {
@@ -88,6 +106,7 @@ window.addEventListener('load', function () {
 
         shootTop() {
             this.projectiles.push(new Projectile(this.game, this.x + 70, this.y + 30));
+            this.ammo--;
             console.log(this.projectiles);
         }
     }
@@ -117,8 +136,8 @@ window.addEventListener('load', function () {
             this.keys = [];
         }
 
-        update() {
-            this.player.update();
+        update(deltaTime) {
+            this.player.update(deltaTime);
         }
 
         draw(context) {
@@ -128,10 +147,14 @@ window.addEventListener('load', function () {
 
     const game = new Game(canvas.width, canvas.height);
 
+    //TODO: extract this code to the class, inject the game object and create it in the game constructor
+    let lastTime = 0;
     //animation loop
-    function animate() {
+    function animate(timeStamp = 0) {
+        const deltaTime = timeStamp - lastTime;
+        lastTime = timeStamp;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        game.update();
+        game.update(deltaTime);
         game.draw(ctx);
         requestAnimationFrame(animate)
     }
