@@ -164,11 +164,22 @@ window.addEventListener('load', function () {
         }
 
         draw(context) {
+            context.save();
+
             context.fillStyle = this.color;
+            context.shadowOffsetX = 2;
+            context.shadowOffsetY = 2;
+            context.shadowColor = 'black';
+            context.font = this.fontSize + 'px ' + this.fontFamily;
+
+            context.fillText(this.game.score, 20, 40);
+
             console.log(this.game.player.ammo);
             for (let i = 0; i < this.game.player.ammo; i++) {
-                context.fillRect(20 + 5 * i, 20, 3, 20);
+                context.fillRect(20 + 5 * i, 50, 3, 20);
             }
+
+            context.restore();
         }
     }
 
@@ -184,6 +195,8 @@ window.addEventListener('load', function () {
             this.enemyTimer = 0;
             this.enemyInterval = 1000;
             this.gameOver = false;
+            this.score = 0;
+            this.winningScore = 10;
         }
 
         addEnemy() {
@@ -212,7 +225,10 @@ window.addEventListener('load', function () {
                         projectile.markedForDeletion = true;
                         if (enemy.lives <= 0) {
                             enemy.markedForDeletion = true;
-                            this.player.score += enemy.score;
+                            this.score += enemy.score;
+                            if (this.score > this.winningScore) {
+                                this.gameOver = true;
+                            }
                         }
                     }
                 })
