@@ -179,6 +179,27 @@ window.addEventListener('load', function () {
                 context.fillRect(20 + 5 * i, 50, 3, 20);
             }
 
+            const formattedTime = Math.ceil((this.game.timeLimit - this.game.gameTime) * 0.001);
+            context.fillText( `Time left: ${formattedTime}`, 20, 100);
+
+            if (this.game.gameOver) {
+                context.textAlign = 'center';
+                let message1;
+                let message2;
+                if (this.game.score > this.game.winningScore) {
+                    message1 = 'You Win!';
+                    message2 = 'Well done';
+                } else {
+                    message1 = 'You Lose!';
+                    message2 = 'Try again';
+                }
+                context.font = '50px' + this.fontFamily;
+                context.fillText(message1, this.game.width * 0.5, this.game.height * 0.5 - 40);
+
+                context.font = '25px' + this.fontFamily;
+                context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 20);
+            }
+
             context.restore();
         }
     }
@@ -197,6 +218,8 @@ window.addEventListener('load', function () {
             this.gameOver = false;
             this.score = 0;
             this.winningScore = 10;
+            this.gameTime = 0;
+            this.timeLimit = 5000;
         }
 
         addEnemy() {
@@ -213,6 +236,13 @@ window.addEventListener('load', function () {
         }
 
         update(deltaTime) {
+            if (!this.gameOver) {
+                this.gameTime += deltaTime;
+                if (this.gameTime > this.timeLimit) {
+                    this.gameOver = true;
+                }
+            }
+
             this.player.update(deltaTime);
             this.enemies.forEach(enemy => {
                 enemy.update();
@@ -225,8 +255,10 @@ window.addEventListener('load', function () {
                         projectile.markedForDeletion = true;
                         if (enemy.lives <= 0) {
                             enemy.markedForDeletion = true;
-                            this.score += enemy.score;
-                            if (this.score > this.winningScore) {
+                            if (!this.gameOver) {
+                                this.score += enemy.score;
+                            }
+                            if (this.score >= this.winningScore) {
                                 this.gameOver = true;
                             }
                         }
@@ -234,7 +266,7 @@ window.addEventListener('load', function () {
                 })
             })
             this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
-            if (this.enemyTimer > this.enemyInterval && !this.gameOver) {
+            if ((this.enemyTimer > this.enemyInterval) && !this.gameOver) {
                 this.addEnemy();
                 this.enemyTimer = 0;
             } else {
