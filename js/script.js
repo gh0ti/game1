@@ -148,11 +148,47 @@ window.addEventListener('load', function () {
     }
 
     class Layer {
+        constructor(game, image, speedModifier) {
+            this.game = game;
+            this.image = image;
+            this.speedModifier = speedModifier;
+            this.width = 1768;
+            this.height = 500;
+            this.x = 0;
+            this.y = 0;
+        }
 
+        update() {
+            if (this.x <= -this.width) {
+                this.x = 0;
+            } else {
+                this.x -= this.game.speed * this.speedModifier;
+            }
+        }
+
+        draw(context) {
+            context.drawImage(this.image, this.x, this.y);
+            context.drawImage(this.image, this.x + this.width, this.y);
+        }
     }
 
     class Background {
+        constructor(game) {
+            this.game = game;
+            this.layer1 = new Layer(game, document.getElementById('layer1'), 0.3);
+            this.layer2 = new Layer(game, document.getElementById('layer2'), 0.4);
+            this.layer3 = new Layer(game, document.getElementById('layer3'), 1);
+            this.layer4 = new Layer(game, document.getElementById('layer4'), 1.3);
+            this.layers = [this.layer1, this.layer2, this.layer3/*, this.layer4*/];
+        }
 
+        update() {
+            this.layers.forEach(layer => layer.update());
+        }
+
+        draw(context) {
+            this.layers.forEach(layer => layer.draw(context));
+        }
     }
 
     class UI {
@@ -211,6 +247,7 @@ window.addEventListener('load', function () {
             this.player = new Player(this);
             this.input = new InputHandler(this);
             this.ui = new UI(this);
+            this.background = new Background(this);
             this.keys = [];
             this.enemies = [];
             this.enemyTimer = 0;
@@ -220,6 +257,7 @@ window.addEventListener('load', function () {
             this.winningScore = 10;
             this.gameTime = 0;
             this.timeLimit = 5000;
+            this.speed = 2;
         }
 
         addEnemy() {
@@ -272,12 +310,17 @@ window.addEventListener('load', function () {
             } else {
                 this.enemyTimer += deltaTime;
             }
+
+            this.background.update();
+            this.background.layer4.update();
         }
 
         draw(context) {
+            this.background.draw(context);
             this.player.draw(context);
             this.ui.draw(context);
             this.enemies.forEach(enemy => enemy.draw(context));
+            this.background.layer4.draw(context)
         }
     }
 
