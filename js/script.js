@@ -13,6 +13,8 @@ window.addEventListener('load', function () {
                     this.game.keys.push(e.key);
                 } else if (e.key === ' ') {
                     this.game.player.shootTop();
+                } else if (e.key === 'd') {
+                    this.game.debug = !this.game.debug;
                 }
                 console.log(this.game.keys);
             });
@@ -58,6 +60,9 @@ window.addEventListener('load', function () {
             this.height = 190;
             this.x = 20;
             this.y = 100;
+            this.frameX = 0;
+            this.frameY = 0;
+            this.maxFrame = 37;
             this.speedY = 0;
             this.maxSpeed = 2;
             this.projectiles = [];
@@ -65,6 +70,7 @@ window.addEventListener('load', function () {
             this.ammo = this.maxAmmo;
             this.ammoTimer = 0;
             this.ammoInterval = 500;
+            this.image = document.getElementById('player');
         }
 
         update(deltaTime) {
@@ -95,11 +101,20 @@ window.addEventListener('load', function () {
             } else {
                 this.ammoTimer += deltaTime;
             }
+
+            if (this.frameX < this.maxFrame) {
+                this.frameX++;
+            } else {
+                this.frameX = 0;
+            }
         }
 
         draw(context) {
             context.fillStyle = 'black';
-            context.fillRect(this.x, this.y, this.width, this.height);
+            if (this.game.debug) {
+                context.strokeRect(this.x, this.y, this.width, this.height);
+            }
+            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, 120, 190, this.x, this.y, this.width, this.height);
 
             this.projectiles.forEach(projectile => projectile.draw(context));
         }
@@ -258,6 +273,7 @@ window.addEventListener('load', function () {
             this.gameTime = 0;
             this.timeLimit = 5000;
             this.speed = 2;
+            this.debug = false;
         }
 
         addEnemy() {
