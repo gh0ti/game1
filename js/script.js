@@ -33,7 +33,7 @@ window.addEventListener('load', function () {
             this.shotSound = document.getElementById('shot');
             this.explosionSound = document.getElementById('explosion');
             this.hitSound = document.getElementById('hit');
-            this.shieldSound = document.getElementById('shield');
+            this.shieldSound = document.getElementById('shieldSound');
 
         }
 
@@ -65,6 +65,40 @@ window.addEventListener('load', function () {
         shield() {
             this.shieldSound.currentTime = 0;
             this.shieldSound.play();
+        }
+    }
+
+    class Shield {
+        constructor(game) {
+            this.game = game;
+            this.width = this.game.player.width;
+            this.height = this.game.player.height;
+            this.frameX = 0;
+            this.maxFrame = 24;
+            this.image = document.getElementById('shield');
+            this.timer = 0;
+            this.fps = 30;
+            this.interval = 1000 / this.fps;
+        }
+
+        update(deltaTime) {
+            if (this.frameX < this.maxFrame) {
+                if (this.timer > this.interval) {
+                    this.frameX++;
+                    this.timer = 0;
+                } else {
+                    this.timer += deltaTime;
+                }
+            }
+        }
+
+        draw(context) {
+            context.drawImage(this.image, this.frameX * this.width, 0, this.width, this.height, this.game.player.x, this.game.player.y, this.width, this.height);
+        }
+
+        reset() {
+            this.frameX = 0;
+            this.game.sound.shield();
         }
     }
 
@@ -403,7 +437,7 @@ window.addEventListener('load', function () {
             this.y = Math.random() * (this.game.height * 0.9 - this.height);
             this.image = document.getElementById('moonfish');
             this.frameX = 38;
-            this.frameY = Math.floor(Math.random() * 2);
+            this.frameY = 0;
             this.speedX = Math.random() * -1.2 - 2;
         }
 
@@ -623,6 +657,7 @@ window.addEventListener('load', function () {
             this.input = new InputHandler(this);
             this.ui = new UI(this);
             this.background = new Background(this);
+            this.shield = new Shield(this);
             this.keys = [];
             this.enemies = [];
             this.enemyTimer = 0;
@@ -685,10 +720,12 @@ window.addEventListener('load', function () {
             }
 
             this.player.update(deltaTime);
+            this.shield.update(deltaTime);
             this.enemies.forEach(enemy => {
                 enemy.update();
                 if (this.checkCollision(this.player, enemy)) {
                     enemy.processDamage(this.player);
+                    this.shield.reset();
                     this.sound.hit();
                 }
                 this.player.projectiles.forEach(projectile => {
@@ -730,6 +767,7 @@ window.addEventListener('load', function () {
         draw(context) {
             this.background.draw(context);
             this.player.draw(context);
+            this.shield.draw(context);
             this.ui.draw(context);
             this.enemies.forEach(enemy => enemy.draw(context));
             this.particles.forEach(particle => particle.draw(context));
