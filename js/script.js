@@ -251,12 +251,30 @@ window.addEventListener('load', function () {
 
         createParticles() {
             let particles = [];
-            const particlesCount = this.lives <= 0 ? 3 : 1;
+            const particlesCount = this.lives <= 0 ? this.score : 1;
             for (let i = 0; i < particlesCount; i++) {
                 particles.push(new Particle(game, this.x + this.width * 0.5, this.y + this.height * 0.5));
             }
 
             return particles;
+        }
+
+        processDamage(collider) {
+            if (collider instanceof Player) {
+                this.lives = 0;
+            } else {
+                this.lives--;
+            }
+
+            this.game.particles = this.game.particles.concat(this.createParticles());
+
+            if (this.lives <= 0) {
+                this.processDeletion(collider);
+            }
+        }
+
+        processDeletion(collider) {
+            this.markedForDeletion = true;
         }
     }
 
@@ -300,6 +318,52 @@ window.addEventListener('load', function () {
             this.image = document.getElementById('lucky');
             this.frameX = 38;
             this.frameY = Math.floor(Math.random() * 2);
+        }
+    }
+
+    class HiveWhale extends Enemy {
+        constructor(game) {
+            super(game);
+            this.lives = 15;
+            this.score = this.lives;
+            this.type = 'hivewhale';
+            this.width = 400;
+            this.height = 227;
+            this.y = Math.random() * (this.game.height * 0.95 - this.height);
+            this.image = document.getElementById('hivewhale');
+            this.frameX = 38;
+            this.frameY = 0;
+            this.speedX = Math.random() * -1.2 - 0.2;
+        }
+
+        processDeletion(collider) {
+            super.processDeletion();
+
+            if (collider instanceof Projectile) {
+                for (let i = 0; i < 3; i++) {
+                    const xCoord = this.x + Math.random() * this.width;
+                    const yCoord = this.y + Math.random() * this.height;
+
+                    this.game.enemies.push(new Drone(this.game, xCoord, yCoord));
+                }
+            }
+        }
+    }
+
+    class Drone extends Enemy {
+        constructor(game, x, y) {
+            super(game);
+            this.lives = 3;
+            this.score = 3;
+            this.type = 'drone';
+            this.width = 115;
+            this.height = 95;
+            this.x = x;
+            this.y = y;
+            this.image = document.getElementById('drone');
+            this.frameX = 38;
+            this.frameY = Math.floor(Math.random() * 2);
+            this.speedX = Math.random() * -4.2 - 0.5;
         }
     }
 
@@ -423,6 +487,8 @@ window.addEventListener('load', function () {
                 this.enemies.push(new Angler1(this));
             } else if (randomize < 0.6) {
                 this.enemies.push(new Angler2(this));
+            } else if (randomize < 0.8) {
+                this.enemies.push(new HiveWhale(this));
             } else {
                 this.enemies.push(new LuckyFish(this));
             }
@@ -455,16 +521,16 @@ window.addEventListener('load', function () {
                     } else {
                         this.score--;
                     }
-                    enemy.lives = 0;
-                    this.particles = this.particles.concat(enemy.createParticles());
-                    enemy.markedForDeletion = true;
+
+                    enemy.processDamage(this.player);
                 }
                 this.player.projectiles.forEach(projectile => {
                     if (this.checkCollision(projectile, enemy)) {
-                        enemy.lives--;
+                        enemy.processDamage(projectile);
+
                         projectile.markedForDeletion = true;
+
                         if (enemy.lives <= 0) {
-                            enemy.markedForDeletion = true;
                             if (!this.gameOver) {
                                 this.score += enemy.score;
                             }
@@ -472,7 +538,6 @@ window.addEventListener('load', function () {
                                 this.gameOver = true;
                             }
                         }
-                        this.particles = this.particles.concat(enemy.createParticles());
                     }
                 })
             });
