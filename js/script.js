@@ -52,7 +52,47 @@ window.addEventListener('load', function () {
     }
 
     class Particle {
+        constructor(game, x, y) {
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.image = document.getElementById('gears');
+            this.frameX = Math.floor(Math.random() * 3);
+            this.frameY = Math.floor(Math.random() * 3);
+            this.spriteSize = 50;
+            this.sizeModifier = (Math.random() * 0.5 + 0.5).toFixed(1);
+            this.size = this.spriteSize * this.sizeModifier;
+            this.speedX = Math.random() * 6 - 3;
+            this.speedY = Math.random() * -15;
+            this.gravity = 0.5;
+            this.markedForDeletion = false;
+            this.angle = 0;
+            this.va = Math.random() * 0.2;
+        }
 
+        update() {
+            this.angle += this.va;
+            this.speedY += this.gravity;
+
+            this.x += -this.speedX;
+
+            if (this.y > 400) {
+                this.speedY = -this.speedY * 0.5;
+                if (this.speedY > -5) {
+                    this.markedForDeletion = true;
+                }
+            }
+
+            this.y += this.speedY;
+        }
+
+        draw(context) {
+            context.save();
+            context.translate(this.x, this.y);
+            context.rotate(this.angle);
+            context.drawImage(this.image, this.frameX * this.spriteSize, this.frameY * this.spriteSize, this.spriteSize, this.spriteSize, this.size * -0.5, this.size * -0.5, this.size, this.size);
+            context.restore();
+        }
     }
 
     class Player {
@@ -207,6 +247,16 @@ window.addEventListener('load', function () {
                 context.fillText(this.lives, this.x, this.y)
             }
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height)
+        }
+
+        createParticles() {
+            let particles = [];
+            const particlesCount = this.lives <= 0 ? 3 : 1;
+            for (let i = 0; i < particlesCount; i++) {
+                particles.push(new Particle(game, this.x + this.width * 0.5, this.y + this.height * 0.5));
+            }
+
+            return particles;
         }
     }
 
@@ -364,6 +414,7 @@ window.addEventListener('load', function () {
             this.timeLimit = 25000;
             this.speed = 2;
             this.debug = false;
+            this.particles = [];
         }
 
         addEnemy() {
@@ -404,6 +455,8 @@ window.addEventListener('load', function () {
                     } else {
                         this.score--;
                     }
+                    enemy.lives = 0;
+                    this.particles = this.particles.concat(enemy.createParticles());
                     enemy.markedForDeletion = true;
                 }
                 this.player.projectiles.forEach(projectile => {
@@ -419,9 +472,16 @@ window.addEventListener('load', function () {
                                 this.gameOver = true;
                             }
                         }
+                        this.particles = this.particles.concat(enemy.createParticles());
                     }
                 })
-            })
+            });
+
+            this.particles.forEach(particle => particle.update());
+            this.particles = this.particles.filter(particle => {
+                return !particle.markedForDeletion;
+            });
+
             this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
             if ((this.enemyTimer > this.enemyInterval) && !this.gameOver) {
                 this.addEnemy();
@@ -439,7 +499,8 @@ window.addEventListener('load', function () {
             this.player.draw(context);
             this.ui.draw(context);
             this.enemies.forEach(enemy => enemy.draw(context));
-            this.background.layer4.draw(context)
+            this.particles.forEach(particle => particle.draw(context))
+            this.background.layer4.draw(context);
         }
     }
 
